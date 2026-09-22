@@ -1,301 +1,2293 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
 <title>TestPort — Device Preview</title>
+
 <meta name="description" content="Preview your website across real device sizes — mobile, tablet, and laptop.">
+
 <link rel="manifest" href="manifest.json">
+
 <meta name="theme-color" content="#0c1116">
+
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TestPort">
+
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
 <style>
-:root{--bg:#0c1116;--panel:#12181f;--panel2:#182029;--border:#232c36;--text:#e7ecf1;--muted:#7c8a99;--amber:#f2a93b;--amberDim:#7a5a20;--letterbox:#05070a;--safeT:env(safe-area-inset-top,0px);--safeB:env(safe-area-inset-bottom,0px)}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden;display:flex;flex-direction:column;padding-top:var(--safeT);padding-bottom:var(--safeB)}
-button,input{font:inherit}
-button{cursor:pointer;border:0}
-.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
-#topbar{display:flex;gap:8px;align-items:center;padding:10px;background:var(--panel);border-bottom:1px solid var(--border);z-index:20;flex-shrink:0}
-#urlForm{display:flex;flex:1;min-width:0}
-#urlInput{width:100%;min-width:0;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-size:14px}
-#urlInput::placeholder{color:var(--muted)}
-.btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px 12px;white-space:nowrap}
-.primary{background:var(--amber);color:#241a06;border-color:var(--amber);font-weight:700}
-.icon{width:42px;padding:10px;display:flex;align-items:center;justify-content:center}
-#rail{background:var(--panel);border-bottom:1px solid var(--border);z-index:19;flex-shrink:0}
-.railHead{display:flex;align-items:center}
-#catTabs{display:flex;gap:4px;padding:8px 10px 0;overflow-x:auto}
-.cat-tab{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:7px 13px;flex-shrink:0}
-.cat-tab.active{background:var(--amberDim);color:#ffdda6;border-color:var(--amberDim)}
-#chipRow{display:flex;gap:8px;padding:8px 10px 10px;overflow-x:auto}
-.chip{flex-shrink:0;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:96px}
-.chip .nm{font-weight:700}
-.chip .dim{color:var(--muted);font-size:11px}
-.chip.active{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset}
-.chip.active .nm{color:var(--amber)}
-#railToggle{display:none}
-#stageWrap{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:var(--letterbox);overflow:hidden}
-#stageWrap.checker{background-color:var(--letterbox);background-image:linear-gradient(45deg,#10151b 25%,transparent 25%),linear-gradient(-45deg,#10151b 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#10151b 75%),linear-gradient(-45deg,transparent 75%,#10151b 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0}
-#deviceFrame{position:relative;display:block;flex:none;background:#fff;overflow:hidden;transform-origin:center center;box-shadow:0 0 0 1px #222,0 20px 60px #0008}
-#deviceFrame.bezel{border:6px solid #1a1a1a;border-radius:18px}
-#previewFrame{display:block;width:100%;height:100%;border:0;background:#fff}
-#frameEmpty,#frameBlocked,#frameOffline{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:20px;text-align:center;background:#0e1319;color:var(--muted);font-size:13px}
-#frameBlocked,#frameOffline{display:none}
-#frameBlocked.show,#frameOffline.show{display:flex}
-#frameBlocked .btn,#frameOffline .btn{margin-top:4px}
-#connBadge{position:absolute;top:10px;right:10px;background:#ff4b3edd;border:1px solid #ff4b3e;color:#fff;font-size:11px;padding:5px 9px;border-radius:7px;z-index:15;display:none;align-items:center;gap:5px}
-#connBadge.show{display:flex}
-#dimBadge{position:absolute;top:10px;left:10px;background:#0c1116dd;border:1px solid var(--border);color:var(--amber);font-size:12px;padding:5px 9px;border-radius:7px;z-index:15;backdrop-filter:blur(4px)}
-#fabStack{position:absolute;right:10px;bottom:calc(10px + var(--safeB));display:flex;flex-direction:column;gap:8px;z-index:16}
-.fab{width:44px;height:44px;border-radius:50%;background:var(--panel);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 4px 14px #0006}
-.fab.active{background:var(--amber);color:#241a06;border-color:var(--amber)}
-#recordBtn.recording{background:#ff4b3e;color:#fff;border-color:#ff4b3e}
-#recordBtn .stopIcon{display:none}
-#recordBtn.recording .recordIcon{display:none}
-#recordBtn.recording .stopIcon{display:block}
-#recordBtn .recordIcon,#recordBtn .stopIcon{font-size:18px}
-body.focus #topbar,body.focus #rail{display:none}
-body.focus #fabStack{opacity:0;transition:opacity .2s}
-body.focus.show-fab #fabStack{opacity:1}
-body.focus #dimBadge{display:none}
-#historyPanel{position:absolute;top:56px;right:10px;z-index:30;background:var(--panel);border:1px solid var(--border);border-radius:10px;width:min(280px,80vw);max-height:50vh;overflow:auto;display:none;box-shadow:0 10px 30px #0008}
-#historyPanel.open{display:block}
-.hitem{padding:10px 12px;font-size:12.5px;border-bottom:1px solid var(--border);word-break:break-all}
-.hempty{padding:14px;color:var(--muted);font-size:12px;text-align:center}
-#toast{position:fixed;bottom:calc(20px + var(--safeB));left:50%;transform:translate(-50%,10px);background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:10px 16px;border-radius:8px;font-size:13px;z-index:100;opacity:0;pointer-events:none;transition:.2s}
-#toast.show{opacity:1;transform:translate(-50%,0)}
-#noteOverlay{position:fixed;inset:0;background:#05070acc;z-index:200;display:flex;align-items:center;justify-content:center;padding:24px}
-#noteOverlay.hidden{display:none}
-#noteCard{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:380px;width:100%}
-#noteCard h2{margin:0 0 10px;font-size:17px}
-#noteCard p{margin:0 0 10px;font-size:13px;line-height:1.55;color:#c4cdd6}
-#noteCard strong{color:var(--amber)}
-#noteCard .btn{width:100%;margin-top:6px}
+:root{
+--bg:#0c1116;
+--panel:#12181f;
+--panel2:#182029;
+--border:#232c36;
+--text:#e7ecf1;
+--muted:#7c8a99;
+--amber:#f2a93b;
+--amberDim:#7a5a20;
+--letterbox:#05070a;
+--safeT:env(safe-area-inset-top,0px);
+--safeB:env(safe-area-inset-bottom,0px)
+}
+
+*{
+box-sizing:border-box;
+-webkit-tap-highlight-color:transparent
+}
+
+html,body{
+height:100%
+}
+
+body{
+margin:0;
+background:var(--bg);
+color:var(--text);
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+overflow:hidden;
+display:flex;
+flex-direction:column;
+padding-top:var(--safeT);
+padding-bottom:var(--safeB)
+}
+
+button,input{
+font:inherit
+}
+
+button{
+cursor:pointer;
+border:0
+}
+
+.mono{
+font-family:ui-monospace,SFMono-Regular,Consolas,monospace
+}
+
+#topbar{
+display:flex;
+gap:8px;
+align-items:center;
+padding:10px;
+background:var(--panel);
+border-bottom:1px solid var(--border);
+z-index:20;
+flex-shrink:0
+}
+
+#urlForm{
+display:flex;
+flex:1;
+min-width:0
+}
+
+#urlInput{
+width:100%;
+min-width:0;
+background:var(--panel2);
+border:1px solid var(--border);
+color:var(--text);
+border-radius:8px;
+padding:10px 12px;
+font-size:14px
+}
+
+#urlInput::placeholder{
+color:var(--muted)
+}
+
+.btn{
+background:var(--panel2);
+color:var(--text);
+border:1px solid var(--border);
+border-radius:8px;
+padding:10px 12px;
+white-space:nowrap
+}
+
+.primary{
+background:var(--amber);
+color:#241a06;
+border-color:var(--amber);
+font-weight:700
+}
+
+.icon{
+width:42px;
+padding:10px;
+display:flex;
+align-items:center;
+justify-content:center
+}
+
+#rail{
+background:var(--panel);
+border-bottom:1px solid var(--border);
+z-index:19;
+flex-shrink:0
+}
+
+.railHead{
+display:flex;
+align-items:center
+}
+
+#catTabs{
+display:flex;
+gap:4px;
+padding:8px 10px 0;
+overflow-x:auto
+}
+
+.cat-tab{
+background:transparent;
+color:var(--muted);
+border:1px solid var(--border);
+border-radius:20px;
+padding:7px 13px;
+flex-shrink:0
+}
+
+.cat-tab.active{
+background:var(--amberDim);
+color:#ffdda6;
+border-color:var(--amberDim)
+}
+
+#chipRow{
+display:flex;
+gap:8px;
+padding:8px 10px 10px;
+overflow-x:auto
+}
+
+.chip{
+flex-shrink:0;
+background:var(--panel2);
+border:1px solid var(--border);
+color:var(--text);
+border-radius:8px;
+padding:8px 10px;
+text-align:left;
+display:flex;
+flex-direction:column;
+gap:2px;
+min-width:96px
+}
+
+.chip .nm{
+font-weight:700
+}
+
+.chip .dim{
+color:var(--muted);
+font-size:11px
+}
+
+.chip.active{
+border-color:var(--amber);
+box-shadow:0 0 0 1px var(--amber) inset
+}
+
+.chip.active .nm{
+color:var(--amber)
+}
+
+#railToggle{
+display:none
+}
+
+#stageWrap{
+position:relative;
+flex:1;
+min-height:0;
+display:flex;
+align-items:center;
+justify-content:center;
+background:var(--letterbox);
+overflow:hidden
+}
+
+#stageWrap.checker{
+background-color:var(--letterbox);
+background-image:
+linear-gradient(45deg,#10151b 25%,transparent 25%),
+linear-gradient(-45deg,#10151b 25%,transparent 25%),
+linear-gradient(45deg,transparent 75%,#10151b 75%),
+linear-gradient(-45deg,transparent 75%,#10151b 75%);
+background-size:20px 20px;
+background-position:0 0,0 10px,10px -10px,-10px 0
+}
+
+#deviceFrame{
+position:relative;
+display:block;
+flex:none;
+background:#fff;
+overflow:hidden;
+transform-origin:center center;
+box-shadow:0 0 0 1px #222,0 20px 60px #0008
+}
+
+#deviceFrame.bezel{
+border:6px solid #1a1a1a;
+border-radius:18px
+}
+
+#previewFrame{
+display:block;
+width:100%;
+height:100%;
+border:0;
+background:#fff
+}
+
+#frameEmpty,
+#frameBlocked,
+#frameOffline{
+position:absolute;
+inset:0;
+z-index:2;
+display:flex;
+align-items:center;
+justify-content:center;
+flex-direction:column;
+gap:10px;
+padding:20px;
+text-align:center;
+background:#0e1319;
+color:var(--muted);
+font-size:13px
+}
+
+#frameBlocked,
+#frameOffline{
+display:none
+}
+
+#frameBlocked.show,
+#frameOffline.show{
+display:flex
+}
+
+#frameBlocked .btn,
+#frameOffline .btn{
+margin-top:4px
+}
+
+#connBadge{
+position:absolute;
+top:10px;
+right:10px;
+background:#ff4b3edd;
+border:1px solid #ff4b3e;
+color:#fff;
+font-size:11px;
+padding:5px 9px;
+border-radius:7px;
+z-index:15;
+display:none;
+align-items:center;
+gap:5px
+}
+
+#connBadge.show{
+display:flex
+}
+
+#dimBadge{
+position:absolute;
+top:10px;
+left:10px;
+background:#0c1116dd;
+border:1px solid var(--border);
+color:var(--amber);
+font-size:12px;
+padding:5px 9px;
+border-radius:7px;
+z-index:15;
+backdrop-filter:blur(4px)
+}
+
+#fabStack{
+position:absolute;
+right:10px;
+bottom:calc(10px + var(--safeB));
+display:flex;
+flex-direction:column;
+gap:8px;
+z-index:16
+}
+
+.fab{
+width:44px;
+height:44px;
+border-radius:50%;
+background:var(--panel);
+border:1px solid var(--border);
+color:var(--text);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:19px;
+box-shadow:0 4px 14px #0006
+}
+
+.fab.active{
+background:var(--amber);
+color:#241a06;
+border-color:var(--amber)
+}
+
+#recordBtn.recording{
+background:#ff4b3e;
+color:#fff;
+border-color:#ff4b3e
+}
+
+#recordBtn .stopIcon{
+display:none
+}
+
+#recordBtn.recording .recordIcon{
+display:none
+}
+
+#recordBtn.recording .stopIcon{
+display:block
+}
+
+#recordBtn .recordIcon,
+#recordBtn .stopIcon{
+font-size:18px
+}
+
+body.focus #topbar,
+body.focus #rail{
+display:none
+}
+
+body.focus #fabStack{
+opacity:0;
+transition:opacity .2s
+}
+
+body.focus.show-fab #fabStack{
+opacity:1
+}
+
+body.focus #dimBadge{
+display:none
+}
+
+#historyPanel{
+position:absolute;
+top:56px;
+right:10px;
+z-index:30;
+background:var(--panel);
+border:1px solid var(--border);
+border-radius:10px;
+width:min(280px,80vw);
+max-height:50vh;
+overflow:auto;
+display:none;
+box-shadow:0 10px 30px #0008
+}
+
+#historyPanel.open{
+display:block
+}
+
+.hitem{
+padding:10px 12px;
+font-size:12.5px;
+border-bottom:1px solid var(--border);
+word-break:break-all
+}
+
+.hempty{
+padding:14px;
+color:var(--muted);
+font-size:12px;
+text-align:center
+}
+
+#toast{
+position:fixed;
+bottom:calc(20px + var(--safeB));
+left:50%;
+transform:translate(-50%,10px);
+background:var(--panel2);
+border:1px solid var(--border);
+color:var(--text);
+padding:10px 16px;
+border-radius:8px;
+font-size:13px;
+z-index:100;
+opacity:0;
+pointer-events:none;
+transition:.2s
+}
+
+#toast.show{
+opacity:1;
+transform:translate(-50%,0)
+}
+
+#noteOverlay{
+position:fixed;
+inset:0;
+background:#05070acc;
+z-index:200;
+display:flex;
+align-items:center;
+justify-content:center;
+padding:24px
+}
+
+#noteOverlay.hidden{
+display:none
+}
+
+#noteCard{
+background:var(--panel);
+border:1px solid var(--border);
+border-radius:14px;
+padding:22px;
+max-width:380px;
+width:100%
+}
+
+#noteCard h2{
+margin:0 0 10px;
+font-size:17px
+}
+
+#noteCard p{
+margin:0 0 10px;
+font-size:13px;
+line-height:1.55;
+color:#c4cdd6
+}
+
+#noteCard strong{
+color:var(--amber)
+}
+
+#noteCard .btn{
+width:100%;
+margin-top:6px
+}
+
 @media(orientation:landscape){
-#rail.collapsed #catTabs,#rail.collapsed #chipRow{display:none}
-#railToggle{display:block;margin:6px 10px 0 auto}
+
+#rail.collapsed #catTabs,
+#rail.collapsed #chipRow{
+display:none
 }
-::-webkit-scrollbar{width:0;height:0}
+
+#railToggle{
+display:block;
+margin:6px 10px 0 auto
+}
+
+}
+
+::-webkit-scrollbar{
+width:0;
+height:0
+}
 </style>
+
 </head>
+
 <body>
+
 <div id="topbar">
+
 <form id="urlForm">
-<input id="urlInput" type="text" inputmode="url" placeholder="Paste your project URL — e.g. mysite.com" autocomplete="off" autocapitalize="off" spellcheck="false">
+
+<input
+id="urlInput"
+type="text"
+inputmode="url"
+placeholder="Paste your project URL — e.g. mysite.com"
+autocomplete="off"
+autocapitalize="off"
+spellcheck="false">
+
 </form>
-<button class="btn primary" id="loadBtn" type="button">Load</button>
-<button class="btn icon" id="historyBtn" type="button">🕘</button>
+
+<button class="btn primary" id="loadBtn" type="button">
+Load
+</button>
+
+<button class="btn icon" id="historyBtn" type="button">
+🕘
+</button>
+
 </div>
+
 <div id="historyPanel"></div>
+
 <div id="rail">
+
 <div class="railHead">
+
 <div id="catTabs">
-<button class="cat-tab active" data-cat="mobile">Mobile</button>
-<button class="cat-tab" data-cat="tablet">Tablet</button>
-<button class="cat-tab" data-cat="laptop">Laptop</button>
-<button class="cat-tab" data-cat="custom">Custom</button>
+
+<button class="cat-tab active" data-cat="mobile">
+Mobile
+</button>
+
+<button class="cat-tab" data-cat="tablet">
+Tablet
+</button>
+
+<button class="cat-tab" data-cat="laptop">
+Laptop
+</button>
+
+<button class="cat-tab" data-cat="custom">
+Custom
+</button>
+
 </div>
-<button class="btn" id="railToggle" type="button">Devices ▾</button>
+
+<button class="btn" id="railToggle" type="button">
+Devices ▾
+</button>
+
 </div>
+
 <div id="chipRow"></div>
+
 </div>
+
 <div id="stageWrap">
+
 <div id="deviceFrame" class="bezel">
+
 <div id="frameEmpty">
-<div style="font-size:26px">📱</div>
-<div>Paste your project URL above and hit <b style="color:var(--amber)">Load</b> to preview it here.<br><br>Some websites block iframe previews; that is controlled by the website.</div>
+
+<div style="font-size:26px">
+📱
 </div>
+
+<div>
+Paste your project URL above and hit
+<b style="color:var(--amber)">Load</b>
+to preview it here.
+<br><br>
+Some websites block iframe previews; that is controlled by the website.
+</div>
+
+</div>
+
 <div id="frameBlocked">
-<div style="font-size:26px">🚫</div>
-<div><b style="color:var(--amber)">This site can't be previewed here.</b><br><br>The site is blocking embedding (X-Frame-Options / CSP), so browsers won't load it in an iframe. This is a restriction set by that website, not an issue with this tool.<br><br>Try opening it in a new tab instead.</div>
-<button class="btn primary" id="openNewTabBtn" type="button">Open in new tab ↗</button>
+
+<div style="font-size:26px">
+🚫
 </div>
+
+<div>
+<b style="color:var(--amber)">
+This site can't be previewed here.
+</b>
+
+<br><br>
+
+The site is blocking embedding
+(X-Frame-Options / CSP), so browsers won't load it in an iframe.
+This is a restriction set by that website, not an issue with this tool.
+
+<br><br>
+
+Try opening it in a new tab instead.
+</div>
+
+<button class="btn primary" id="openNewTabBtn" type="button">
+Open in new tab ↗
+</button>
+
+</div>
+
 <div id="frameOffline">
-<div style="font-size:26px">📡</div>
-<div><b style="color:var(--amber)">You're offline.</b><br><br>Check your internet connection and try loading the site again.</div>
-<button class="btn primary" id="retryOfflineBtn" type="button">Retry</button>
+
+<div style="font-size:26px">
+📡
 </div>
-<iframe id="previewFrame" style="display:none"></iframe>
+
+<div>
+<b style="color:var(--amber)">
+You're offline.
+</b>
+
+<br><br>
+
+Check your internet connection and try loading the site again.
 </div>
-<div id="dimBadge" class="mono"><span id="dimText">— × —</span></div>
-<div id="connBadge">⚠ Offline</div>
+
+<button class="btn primary" id="retryOfflineBtn" type="button">
+Retry
+</button>
+
+</div>
+
+<iframe
+id="previewFrame"
+style="display:none">
+</iframe>
+
+</div>
+
+<div id="dimBadge" class="mono">
+<span id="dimText">— × —</span>
+</div>
+
+<div id="connBadge">
+⚠ Offline
+</div>
+
 <div id="fabStack">
-<button class="fab" id="fullscreenBtn" title="Fullscreen">⛶</button>
-<button class="fab" id="bezelBtn" title="Toggle bezel">▢</button>
-<button class="fab" id="checkerBtn" title="Toggle checker">▦</button>
-<button class="fab" id="screenshotBtn" title="Screenshot">📷</button>
-<button class="fab" id="recordBtn" title="Start Recording"><span class="recordIcon">🎥</span><span class="stopIcon">⏹</span></button>
-<button class="fab" id="focusBtn" title="Focus mode">◎</button>
+
+<button class="fab" id="fullscreenBtn" title="Fullscreen">
+⛶
+</button>
+
+<button class="fab" id="bezelBtn" title="Toggle bezel">
+▢
+</button>
+
+<button class="fab" id="checkerBtn" title="Toggle checker">
+▦
+</button>
+
+<button class="fab" id="screenshotBtn" title="Screenshot">
+📷
+</button>
+
+<button class="fab" id="recordBtn" title="Start Recording">
+
+<span class="recordIcon">
+🎥
+</span>
+
+<span class="stopIcon">
+⏹
+</span>
+
+</button>
+
+<button class="fab" id="focusBtn" title="Focus mode">
+◎
+</button>
+
 </div>
+
 </div>
+
 <div id="toast"></div>
+
 <div id="noteOverlay">
+
 <div id="noteCard">
-<h2>Capture controls</h2>
-<p><strong>📷 Screenshot</strong> captures the device preview.</p>
-<p><strong>🎥 Recording</strong> records the device preview. Your browser may ask you to choose the current tab.</p>
-<p>For the cleanest result, use <strong>Focus mode</strong> and then <strong>Fullscreen</strong>.</p>
-<button class="btn primary" id="noteOk" type="button">Got it</button>
+
+<h2>
+Capture controls
+</h2>
+
+<p>
+<strong>📷 Screenshot</strong>
+captures the device preview.
+</p>
+
+<p>
+<strong>🎥 Recording</strong>
+records the device preview.
+Your browser may ask you to choose the current tab.
+</p>
+
+<p>
+For the cleanest result, use
+<strong>Focus mode</strong>
+and then
+<strong>Fullscreen</strong>.
+</p>
+
+<button class="btn primary" id="noteOk" type="button">
+Got it
+</button>
+
 </div>
+
 </div>
+
+
 <script>
-(()=>{"use strict";
-const DEVICES={mobile:[["iPhone SE",375,667],["iPhone 15",390,844],["iPhone 15 Pro Max",430,932],["Pixel 8",412,915],["Galaxy S23",360,780],["Small Android",360,640]],tablet:[["iPad Mini",744,1133],["iPad Air",820,1180],["iPad Pro 11\"",834,1194],["iPad Pro 12.9\"",1024,1366]],laptop:[["Laptop HD",1366,768],["Laptop M",1440,900],["Laptop L",1536,864],["Laptop XL",1920,1080]]};
-const state={cat:"mobile",device:{name:"iPhone 15",w:390,h:844},bezel:true,checker:false,history:JSON.parse(localStorage.getItem("framePreview.history")||"[]")};
-const $=id=>document.getElementById(id),stage=$("stageWrap"),frame=$("deviceFrame"),iframe=$("previewFrame"),empty=$("frameEmpty"),dim=$("dimText"),chips=$("chipRow"),tabs=$("catTabs");
+
+(()=>{
+
+"use strict";
+
+
+/* =========================
+   DEVICE DATA
+========================= */
+
+const DEVICES={
+
+mobile:[
+["iPhone SE",375,667],
+["iPhone 15",390,844],
+["iPhone 15 Pro Max",430,932],
+["Pixel 8",412,915],
+["Galaxy S23",360,780],
+["Small Android",360,640]
+],
+
+tablet:[
+["iPad Mini",744,1133],
+["iPad Air",820,1180],
+["iPad Pro 11\"",834,1194],
+["iPad Pro 12.9\"",1024,1366]
+],
+
+laptop:[
+["Laptop HD",1366,768],
+["Laptop M",1440,900],
+["Laptop L",1536,864],
+["Laptop XL",1920,1080]
+]
+
+};
+
+
+/* =========================
+   STATE
+========================= */
+
+const state={
+
+cat:"mobile",
+
+device:{
+name:"iPhone 15",
+w:390,
+h:844
+},
+
+bezel:true,
+
+checker:false,
+
+history:JSON.parse(
+localStorage.getItem("framePreview.history")||"[]"
+)
+
+};
+
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const $=id=>document.getElementById(id);
+
+const stage=$("stageWrap");
+const frame=$("deviceFrame");
+const iframe=$("previewFrame");
+const empty=$("frameEmpty");
+const dim=$("dimText");
+const chips=$("chipRow");
+const tabs=$("catTabs");
+
 let toastTimer;
-function toast(message){const t=$("toast");t.textContent=message;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),1800)}
+
+
+/* =========================
+   TOAST
+========================= */
+
+function toast(message){
+
+const t=$("toast");
+
+t.textContent=message;
+
+t.classList.add("show");
+
+clearTimeout(toastTimer);
+
+toastTimer=setTimeout(
+()=>t.classList.remove("show"),
+2200
+);
+
+}
+
+
+/* =========================
+   NOTE
+========================= */
+
 const note=$("noteOverlay");
-if(localStorage.getItem("framePreview.noteSeen")==="1")note.classList.add("hidden");
-$("noteOk").onclick=()=>{note.classList.add("hidden");localStorage.setItem("framePreview.noteSeen","1")};
+
+if(
+localStorage.getItem("framePreview.noteSeen")==="1"
+){
+note.classList.add("hidden");
+}
+
+$("noteOk").onclick=()=>{
+
+note.classList.add("hidden");
+
+localStorage.setItem(
+"framePreview.noteSeen",
+"1"
+);
+
+};
+
+
+/* =========================
+   DEVICE CHIPS
+========================= */
+
 function renderChips(){
+
 chips.innerHTML="";
+
+
 if(state.cat==="custom"){
+
 const wrapper=document.createElement("div");
-wrapper.style="display:flex;gap:8px;align-items:center";
-wrapper.innerHTML=`<input id="cw" type="number" min="1" placeholder="Width" value="${state.device.w}" style="width:90px;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px"><span>×</span><input id="ch" type="number" min="1" placeholder="Height" value="${state.device.h}" style="width:90px;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px"><button class="btn primary" id="applyCustom" type="button">Apply</button>`;
+
+wrapper.style=
+"display:flex;gap:8px;align-items:center";
+
+wrapper.innerHTML=`
+
+<input
+id="cw"
+type="number"
+min="1"
+placeholder="Width"
+value="${state.device.w}"
+style="
+width:90px;
+background:var(--panel2);
+border:1px solid var(--border);
+color:var(--text);
+border-radius:8px;
+padding:8px">
+
+<span>×</span>
+
+<input
+id="ch"
+type="number"
+min="1"
+placeholder="Height"
+value="${state.device.h}"
+style="
+width:90px;
+background:var(--panel2);
+border:1px solid var(--border);
+color:var(--text);
+border-radius:8px;
+padding:8px">
+
+<button
+class="btn primary"
+id="applyCustom"
+type="button">
+Apply
+</button>
+
+`;
+
 chips.appendChild(wrapper);
-$("applyCustom").onclick=()=>{const W=+$("cw").value,H=+$("ch").value;if(W>0&&H>0)setDevice({name:"Custom",w:W,h:H});else toast("Enter a valid width and height")};
+
+
+$("applyCustom").onclick=()=>{
+
+const W=+$("cw").value;
+const H=+$("ch").value;
+
+if(W>0&&H>0){
+
+setDevice({
+name:"Custom",
+w:W,
+h:H
+});
+
+}else{
+
+toast("Enter a valid width and height");
+
+}
+
+};
+
 return;
+
 }
-DEVICES[state.cat].forEach(([name,w,h])=>{const button=document.createElement("button");button.type="button";button.className="chip"+(state.device.name===name?" active":"");button.innerHTML=`<span class="nm">${name}</span><span class="dim mono">${w}×${h}</span>`;button.onclick=()=>setDevice({name,w,h});chips.appendChild(button)});
+
+
+DEVICES[state.cat].forEach(
+([name,w,h])=>{
+
+const button=document.createElement("button");
+
+button.type="button";
+
+button.className=
+"chip"+
+(state.device.name===name?" active":"");
+
+button.innerHTML=`
+
+<span class="nm">
+${name}
+</span>
+
+<span class="dim mono">
+${w}×${h}
+</span>
+
+`;
+
+button.onclick=()=>setDevice({
+name,
+w,
+h
+});
+
+chips.appendChild(button);
+
+});
+
 }
-function setDevice(device){state.device={...device};renderChips();requestAnimationFrame(layout)}
+
+
+function setDevice(device){
+
+state.device={
+...device
+};
+
+renderChips();
+
+requestAnimationFrame(layout);
+
+}
+
+
+/* =========================
+   DEVICE LAYOUT
+========================= */
+
 function layout(){
-const W=Math.max(1,Number(state.device.w)),H=Math.max(1,Number(state.device.h)),padding=16;
-const availableWidth=Math.max(1,stage.clientWidth-padding*2),availableHeight=Math.max(1,stage.clientHeight-padding*2);
-const scale=Math.min(availableWidth/W,availableHeight/H,1);
-frame.style.width=W+"px";frame.style.height=H+"px";frame.style.minWidth=W+"px";frame.style.minHeight=H+"px";iframe.style.width=W+"px";iframe.style.height=H+"px";frame.style.transform=`scale(${scale})`;dim.textContent=`${W} × ${H} px · ${Math.round(scale*100)}%`;
+
+const W=Math.max(
+1,
+Number(state.device.w)
+);
+
+const H=Math.max(
+1,
+Number(state.device.h)
+);
+
+const padding=16;
+
+const availableWidth=Math.max(
+1,
+stage.clientWidth-padding*2
+);
+
+const availableHeight=Math.max(
+1,
+stage.clientHeight-padding*2
+);
+
+const scale=Math.min(
+availableWidth/W,
+availableHeight/H,
+1
+);
+
+frame.style.width=W+"px";
+frame.style.height=H+"px";
+
+frame.style.minWidth=W+"px";
+frame.style.minHeight=H+"px";
+
+iframe.style.width=W+"px";
+iframe.style.height=H+"px";
+
+frame.style.transform=
+`scale(${scale})`;
+
+dim.textContent=
+`${W} × ${H} px · ${Math.round(scale*100)}%`;
+
 }
-window.addEventListener("resize",layout);
-window.addEventListener("orientationchange",()=>setTimeout(layout,100));
-tabs.onclick=event=>{const button=event.target.closest(".cat-tab");if(!button)return;state.cat=button.dataset.cat;[...tabs.children].forEach(tab=>tab.classList.toggle("active",tab===button));renderChips()};
-$("bezelBtn").onclick=()=>{state.bezel=!state.bezel;frame.classList.toggle("bezel",state.bezel);$("bezelBtn").classList.toggle("active",state.bezel);toast(state.bezel?"Frame ON":"Frame OFF")};
-$("checkerBtn").onclick=()=>{state.checker=!state.checker;stage.classList.toggle("checker",state.checker);$("checkerBtn").classList.toggle("active",state.checker);toast(state.checker?"Grid ON":"Grid OFF")};
+
+
+window.addEventListener(
+"resize",
+layout
+);
+
+window.addEventListener(
+"orientationchange",
+()=>setTimeout(layout,100)
+);
+
+
+/* =========================
+   CATEGORY TABS
+========================= */
+
+tabs.onclick=event=>{
+
+const button=
+event.target.closest(".cat-tab");
+
+if(!button)return;
+
+state.cat=button.dataset.cat;
+
+[...tabs.children].forEach(
+tab=>tab.classList.toggle(
+"active",
+tab===button
+)
+);
+
+renderChips();
+
+};
+
+
+/* =========================
+   BEZEL
+========================= */
+
+$("bezelBtn").onclick=()=>{
+
+state.bezel=!state.bezel;
+
+frame.classList.toggle(
+"bezel",
+state.bezel
+);
+
+$("bezelBtn").classList.toggle(
+"active",
+state.bezel
+);
+
+toast(
+state.bezel?
+"Frame ON":
+"Frame OFF"
+);
+
+};
+
+
+/* =========================
+   CHECKER
+========================= */
+
+$("checkerBtn").onclick=()=>{
+
+state.checker=!state.checker;
+
+stage.classList.toggle(
+"checker",
+state.checker
+);
+
+$("checkerBtn").classList.toggle(
+"active",
+state.checker
+);
+
+toast(
+state.checker?
+"Grid ON":
+"Grid OFF"
+);
+
+};
+
+
 $("bezelBtn").classList.add("active");
-function normalizeUrl(raw){let url=raw.trim();if(!url)return null;if(!/^https?:\/\//i.test(url))url="https://"+url;try{new URL(url);return url}catch{return null}}
-const blocked=$("frameBlocked"),offlineCard=$("frameOffline");
-let loadTimer=null,pendingUrl=null;
+
+
+/* =========================
+   URL
+========================= */
+
+function normalizeUrl(raw){
+
+let url=raw.trim();
+
+if(!url)return null;
+
+if(!/^https?:\/\//i.test(url)){
+url="https://"+url;
+}
+
+try{
+
+new URL(url);
+
+return url;
+
+}catch{
+
+return null;
+
+}
+
+}
+
+
+const blocked=$("frameBlocked");
+const offlineCard=$("frameOffline");
+
+let loadTimer=null;
+let pendingUrl=null;
+
+
+/* =========================
+   FRAME STATE
+========================= */
+
 function showState(which){
-empty.style.display="none";blocked.classList.remove("show");offlineCard.classList.remove("show");iframe.style.display="none";
-if(which==="empty"){empty.style.display="flex"}
-else if(which==="blocked"){blocked.classList.add("show")}
-else if(which==="offline"){offlineCard.classList.add("show")}
-else if(which==="loaded"){iframe.style.display="block"}
+
+empty.style.display="none";
+
+blocked.classList.remove("show");
+
+offlineCard.classList.remove("show");
+
+iframe.style.display="none";
+
+
+if(which==="empty"){
+
+empty.style.display="flex";
+
 }
+
+else if(which==="blocked"){
+
+blocked.classList.add("show");
+
+}
+
+else if(which==="offline"){
+
+offlineCard.classList.add("show");
+
+}
+
+else if(which==="loaded"){
+
+iframe.style.display="block";
+
+}
+
+}
+
+
+/* =========================
+   LOAD URL
+========================= */
+
 function loadUrl(raw){
+
 const url=normalizeUrl(raw);
-if(!url){toast("Enter a valid URL");return}
-if(!navigator.onLine){pendingUrl=url;$("urlInput").value=url;showState("offline");toast("You're offline");return}
+
+if(!url){
+
+toast("Enter a valid URL");
+
+return;
+
+}
+
+
+if(!navigator.onLine){
+
 pendingUrl=url;
-clearTimeout(loadTimer);
-let loadedOk=false,settled=false;
-iframe.onload=()=>{
-loadedOk=true;settled=true;
-clearTimeout(loadTimer);
-showState("loaded");
-};
-iframe.onerror=()=>{
-settled=true;
-clearTimeout(loadTimer);
-showState("blocked");
-};
-iframe.src=url;
-showState("loaded");
+
 $("urlInput").value=url;
-state.history=[url,...state.history.filter(item=>item!==url)].slice(0,8);
-localStorage.setItem("framePreview.history",JSON.stringify(state.history));
+
+showState("offline");
+
+toast("You're offline");
+
+return;
+
+}
+
+
+pendingUrl=url;
+
+clearTimeout(loadTimer);
+
+let loadedOk=false;
+let settled=false;
+
+
+iframe.onload=()=>{
+
+loadedOk=true;
+settled=true;
+
+clearTimeout(loadTimer);
+
+showState("loaded");
+
+};
+
+
+iframe.onerror=()=>{
+
+settled=true;
+
+clearTimeout(loadTimer);
+
+showState("blocked");
+
+};
+
+
+iframe.src=url;
+
+showState("loaded");
+
+$("urlInput").value=url;
+
+
+state.history=[
+url,
+...state.history.filter(
+item=>item!==url
+)
+].slice(0,8);
+
+
+localStorage.setItem(
+"framePreview.history",
+JSON.stringify(state.history)
+);
+
 renderHistory();
+
+
 loadTimer=setTimeout(()=>{
-if(!loadedOk&&!settled){showState("blocked")}
+
+if(!loadedOk&&!settled){
+
+showState("blocked");
+
+}
+
 },12000);
+
 }
-$("urlForm").onsubmit=event=>{event.preventDefault();loadUrl($("urlInput").value)};
-$("loadBtn").onclick=()=>loadUrl($("urlInput").value);
-$("openNewTabBtn").onclick=()=>{if(pendingUrl)window.open(pendingUrl,"_blank","noopener")};
-$("retryOfflineBtn").onclick=()=>{if(pendingUrl)loadUrl(pendingUrl)};
+
+
+$("urlForm").onsubmit=event=>{
+
+event.preventDefault();
+
+loadUrl(
+$("urlInput").value
+);
+
+};
+
+
+$("loadBtn").onclick=()=>{
+
+loadUrl(
+$("urlInput").value
+);
+
+};
+
+
+$("openNewTabBtn").onclick=()=>{
+
+if(pendingUrl){
+
+window.open(
+pendingUrl,
+"_blank",
+"noopener"
+);
+
+}
+
+};
+
+
+$("retryOfflineBtn").onclick=()=>{
+
+if(pendingUrl){
+
+loadUrl(pendingUrl);
+
+}
+
+};
+
+
+/* =========================
+   CONNECTION
+========================= */
+
 function updateConnBadge(){
+
 const online=navigator.onLine;
-$("connBadge").classList.toggle("show",!online);
-if(!online&&iframe.style.display==="block"){showState("offline")}
+
+$("connBadge").classList.toggle(
+"show",
+!online
+);
+
+if(
+!online &&
+iframe.style.display==="block"
+){
+
+showState("offline");
+
 }
-window.addEventListener("online",()=>{updateConnBadge();toast("Back online")});
-window.addEventListener("offline",()=>{updateConnBadge();toast("You're offline")});
+
+}
+
+
+window.addEventListener(
+"online",
+()=>{
+
 updateConnBadge();
+
+toast("Back online");
+
+}
+);
+
+
+window.addEventListener(
+"offline",
+()=>{
+
+updateConnBadge();
+
+toast("You're offline");
+
+}
+);
+
+
+updateConnBadge();
+
+
+/* =========================
+   HISTORY
+========================= */
+
 function renderHistory(){
+
 const panel=$("historyPanel");
-if(!state.history.length){panel.innerHTML='<div class="hempty">No recent URLs yet</div>';return}
-panel.innerHTML=state.history.map(url=>`<div class="hitem" data-url="${url.replace(/"/g,"&quot;")}">${url}</div>`).join("");
-panel.querySelectorAll(".hitem").forEach(item=>item.onclick=()=>{loadUrl(item.dataset.url);panel.classList.remove("open")});
+
+if(!state.history.length){
+
+panel.innerHTML=
+'<div class="hempty">No recent URLs yet</div>';
+
+return;
+
 }
-$("historyBtn").onclick=event=>{event.stopPropagation();$("historyPanel").classList.toggle("open")};
-document.onclick=event=>{if(!event.target.closest("#historyPanel")&&!event.target.closest("#historyBtn"))$("historyPanel").classList.remove("open")};
+
+
+panel.innerHTML=
+state.history.map(
+url=>`
+
+<div
+class="hitem"
+data-url="${url.replace(/"/g,"&quot;")}">
+
+${url}
+
+</div>
+
+`
+).join("");
+
+
+panel.querySelectorAll(".hitem")
+.forEach(
+item=>{
+
+item.onclick=()=>{
+
+loadUrl(
+item.dataset.url
+);
+
+panel.classList.remove(
+"open"
+);
+
+};
+
+}
+);
+
+}
+
+
+$("historyBtn").onclick=event=>{
+
+event.stopPropagation();
+
+$("historyPanel")
+.classList.toggle("open");
+
+};
+
+
+document.onclick=event=>{
+
+if(
+!event.target.closest("#historyPanel") &&
+!event.target.closest("#historyBtn")
+){
+
+$("historyPanel")
+.classList.remove("open");
+
+}
+
+};
+
+
 renderHistory();
-$("focusBtn").onclick=()=>{const isFocus=document.body.classList.toggle("focus");$("focusBtn").classList.toggle("active",isFocus);toast(isFocus?"Focus Mode ON":"Focus Mode OFF");setTimeout(layout,80)};
-stage.onclick=event=>{if(document.body.classList.contains("focus")&&event.target===stage)document.body.classList.toggle("show-fab")};
-$("fullscreenBtn").onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{toast("Fullscreen is not available here")}setTimeout(layout,100)};
-$("railToggle").onclick=()=>{const rail=$("rail");rail.classList.toggle("collapsed");$("railToggle").textContent=rail.classList.contains("collapsed")?"Devices ▸":"Devices ▾";setTimeout(layout,50)};
-function landscapeRail(){if(matchMedia("(orientation:landscape)").matches){$("rail").classList.add("collapsed");$("railToggle").textContent="Devices ▸"}else{$("rail").classList.remove("collapsed");$("railToggle").textContent="Devices ▾"}setTimeout(layout,60)}
-window.addEventListener("orientationchange",landscapeRail);
+
+
+/* =========================
+   FOCUS MODE
+========================= */
+
+$("focusBtn").onclick=()=>{
+
+const isFocus=
+document.body.classList.toggle("focus");
+
+$("focusBtn").classList.toggle(
+"active",
+isFocus
+);
+
+toast(
+isFocus?
+"Focus Mode ON":
+"Focus Mode OFF"
+);
+
+setTimeout(
+layout,
+80
+);
+
+};
+
+
+stage.onclick=event=>{
+
+if(
+document.body.classList.contains("focus") &&
+event.target===stage
+){
+
+document.body.classList.toggle(
+"show-fab"
+);
+
+}
+
+};
+
+
+/* =========================
+   FULLSCREEN
+========================= */
+
+$("fullscreenBtn").onclick=async()=>{
+
+try{
+
+if(!document.fullscreenElement){
+
+await document.documentElement.requestFullscreen();
+
+}else{
+
+await document.exitFullscreen();
+
+}
+
+}catch{
+
+toast(
+"Fullscreen is not available here"
+);
+
+}
+
+setTimeout(
+layout,
+100
+);
+
+};
+
+
+/* =========================
+   LANDSCAPE RAIL
+========================= */
+
+$("railToggle").onclick=()=>{
+
+const rail=$("rail");
+
+rail.classList.toggle(
+"collapsed"
+);
+
+$("railToggle").textContent=
+rail.classList.contains("collapsed")?
+"Devices ▸":
+"Devices ▾";
+
+setTimeout(
+layout,
+50
+);
+
+};
+
+
+function landscapeRail(){
+
+if(
+matchMedia(
+"(orientation:landscape)"
+).matches
+){
+
+$("rail").classList.add(
+"collapsed"
+);
+
+$("railToggle").textContent=
+"Devices ▸";
+
+}else{
+
+$("rail").classList.remove(
+"collapsed"
+);
+
+$("railToggle").textContent=
+"Devices ▾";
+
+}
+
+setTimeout(
+layout,
+60
+);
+
+}
+
+
+window.addEventListener(
+"orientationchange",
+landscapeRail
+);
+
+
+/* =========================================================
+   RECORDING
+   Existing recording system — unchanged
+========================================================= */
+
 let recording=null;
+
+
 async function getCapture(){
-if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia)throw new Error("Screenshot/recording needs desktop Chrome — mobile browsers do not support this yet");
-return navigator.mediaDevices.getDisplayMedia({video:{displaySurface:"browser",frameRate:30},audio:false,preferCurrentTab:true,selfBrowserSurface:"include",surfaceSwitching:"exclude"});
+
+if(
+!navigator.mediaDevices ||
+!navigator.mediaDevices.getDisplayMedia
+){
+
+throw new Error(
+"Screenshot/recording needs desktop Chrome — mobile browsers do not support this yet"
+);
+
 }
+
+return navigator.mediaDevices.getDisplayMedia({
+
+video:{
+displaySurface:"browser",
+frameRate:30
+},
+
+audio:false,
+
+preferCurrentTab:true,
+
+selfBrowserSurface:"include",
+
+surfaceSwitching:"exclude"
+
+});
+
+}
+
+
 function cropDeviceFrame(video,canvas){
-const rect=frame.getBoundingClientRect(),videoWidth=video.videoWidth||window.innerWidth,videoHeight=video.videoHeight||window.innerHeight;
-const scaleX=videoWidth/Math.max(1,window.innerWidth),scaleY=videoHeight/Math.max(1,window.innerHeight);
-let x=Math.round(rect.left*scaleX),y=Math.round(rect.top*scaleY),width=Math.round(rect.width*scaleX),height=Math.round(rect.height*scaleY);
-x=Math.max(0,Math.min(x,videoWidth-1));y=Math.max(0,Math.min(y,videoHeight-1));width=Math.max(1,Math.min(width,videoWidth-x));height=Math.max(1,Math.min(height,videoHeight-y));
-canvas.width=width;canvas.height=height;
-const ctx=canvas.getContext("2d");ctx.drawImage(video,x,y,width,height,0,0,width,height);
+
+const rect=
+frame.getBoundingClientRect();
+
+const videoWidth=
+video.videoWidth||window.innerWidth;
+
+const videoHeight=
+video.videoHeight||window.innerHeight;
+
+
+const scaleX=
+videoWidth/
+Math.max(
+1,
+window.innerWidth
+);
+
+const scaleY=
+videoHeight/
+Math.max(
+1,
+window.innerHeight
+);
+
+
+let x=Math.round(
+rect.left*scaleX
+);
+
+let y=Math.round(
+rect.top*scaleY
+);
+
+let width=Math.round(
+rect.width*scaleX
+);
+
+let height=Math.round(
+rect.height*scaleY
+);
+
+
+x=Math.max(
+0,
+Math.min(
+x,
+videoWidth-1
+)
+);
+
+y=Math.max(
+0,
+Math.min(
+y,
+videoHeight-1
+)
+);
+
+width=Math.max(
+1,
+Math.min(
+width,
+videoWidth-x
+)
+);
+
+height=Math.max(
+1,
+Math.min(
+height,
+videoHeight-y
+)
+);
+
+
+canvas.width=width;
+canvas.height=height;
+
+
+const ctx=
+canvas.getContext("2d");
+
+ctx.drawImage(
+video,
+x,
+y,
+width,
+height,
+0,
+0,
+width,
+height
+);
+
 }
+
+
+/* =========================================================
+   NEW SCREENSHOT SYSTEM
+   Cloudflare Worker
+   Microlink → Thum.io fallback
+========================================================= */
+
+const SCREENSHOT_API=
+"https://testport-ss.devpandey618.workers.dev/screenshot";
+
+
 $("screenshotBtn").onclick=async()=>{
-let stream,video;
-try{
-if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){toast("Not available on mobile browsers — try desktop Chrome/Edge");return}
-toast("Choose This Tab in the capture dialog");
-stream=await getCapture();video=document.createElement("video");video.srcObject=stream;video.muted=true;video.playsInline=true;await video.play();await new Promise(resolve=>setTimeout(resolve,150));
-const canvas=document.createElement("canvas");cropDeviceFrame(video,canvas);
-canvas.toBlob(blob=>{if(!blob){toast("Screenshot failed");return}const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`preview-${state.device.w}x${state.device.h}.png`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1500);toast("Screenshot saved")},"image/png");
-}catch(error){toast(error.message||"Screenshot cancelled")}finally{if(stream)stream.getTracks().forEach(track=>track.stop())}
-};
-$("recordBtn").onclick=async()=>{
-if(recording){recording.stop();return}
-let stream;
-try{
-if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){toast("Not available on mobile browsers — try desktop Chrome/Edge");return}
-toast("Choose This Tab in the capture dialog");
-stream=await getCapture();
-const video=document.createElement("video");video.srcObject=stream;video.muted=true;video.playsInline=true;await video.play();
-const canvas=document.createElement("canvas"),FPS=30,canvasStream=canvas.captureStream(FPS),chunks=[];
-const supportedTypes=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"];
-const mimeType=supportedTypes.find(type=>MediaRecorder.isTypeSupported(type))||"";
-const recorder=new MediaRecorder(canvasStream,mimeType?{mimeType}:undefined);
-const draw=()=>{if(recorder.state==="recording"){cropDeviceFrame(video,canvas);requestAnimationFrame(draw)}};
-recorder.ondataavailable=event=>{if(event.data.size)chunks.push(event.data)};
-recorder.onstop=()=>{
-stream.getTracks().forEach(track=>track.stop());canvasStream.getTracks().forEach(track=>track.stop());
-const blob=new Blob(chunks,{type:recorder.mimeType||"video/webm"}),link=document.createElement("a");
-link.href=URL.createObjectURL(blob);link.download=`preview-${state.device.w}x${state.device.h}.webm`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),2000);
-recording=null;$("recordBtn").classList.remove("recording");$("recordBtn").title="Start Recording";toast("Recording saved");
-};
-stream.getVideoTracks()[0].addEventListener("ended",()=>{if(recording)recorder.stop()});
-recorder.start(250);recording={stop:()=>recorder.stop()};$("recordBtn").classList.add("recording");$("recordBtn").title="Stop Recording";toast("🎥 Recording… tap ⏹ to stop");draw();
-}catch(error){if(stream)stream.getTracks().forEach(track=>track.stop());toast(error.message||"Recording cancelled")}
-};
-renderChips();landscapeRail();layout();
-if("serviceWorker" in navigator){
-window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})});
+
+/*
+   Screenshot ke liye loaded URL zaroori hai.
+*/
+
+if(!pendingUrl){
+
+toast("First load a website");
+
+return;
+
 }
+
+
+const width=Math.max(
+1,
+Number(state.device.w)
+);
+
+const height=Math.max(
+1,
+Number(state.device.h)
+);
+
+
+const button=$("screenshotBtn");
+
+const oldTitle=
+button.title;
+
+
+try{
+
+button.disabled=true;
+
+button.style.opacity="0.6";
+
+button.style.pointerEvents="none";
+
+toast(
+`Creating ${width}×${height} screenshot…`
+);
+
+
+/*
+   Cloudflare Worker ko request
+*/
+
+const response=await fetch(
+SCREENSHOT_API,
+{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+"Accept":"image/png"
+},
+
+body:JSON.stringify({
+
+url:pendingUrl,
+
+width:width,
+
+height:height
+
+})
+
+}
+);
+
+
+/*
+   Worker agar error JSON bheje
+*/
+
+if(!response.ok){
+
+let errorMessage=
+`Screenshot failed (${response.status})`;
+
+try{
+
+const data=
+await response.json();
+
+if(data?.error){
+
+errorMessage=data.error;
+
+}
+
+}catch{
+
+/* ignore JSON parsing error */
+
+}
+
+throw new Error(
+errorMessage
+);
+
+}
+
+
+/*
+   Worker se direct image/blob
+*/
+
+const blob=
+await response.blob();
+
+
+if(
+!blob ||
+blob.size===0
+){
+
+throw new Error(
+"Empty screenshot received"
+);
+
+}
+
+
+/*
+   PNG download
+*/
+
+const downloadUrl=
+URL.createObjectURL(blob);
+
+const link=
+document.createElement("a");
+
+link.href=downloadUrl;
+
+link.download=
+`testport-${state.device.name
+.replace(/[^a-z0-9]+/gi,"-")
+.toLowerCase()}-${width}x${height}.png`;
+
+document.body.appendChild(link);
+
+link.click();
+
+link.remove();
+
+
+setTimeout(
+()=>URL.revokeObjectURL(downloadUrl),
+3000
+);
+
+
+/*
+   Provider info Worker header se
+*/
+
+const provider=
+response.headers.get(
+"X-TestPort-Provider"
+);
+
+
+if(provider){
+
+toast(
+`Screenshot saved • ${provider}`
+);
+
+}else{
+
+toast(
+"Screenshot saved"
+);
+
+}
+
+
+}catch(error){
+
+console.error(
+"TestPort Screenshot Error:",
+error
+);
+
+toast(
+error.message ||
+"Screenshot failed"
+);
+
+
+}finally{
+
+button.disabled=false;
+
+button.style.opacity="";
+
+button.style.pointerEvents="";
+
+button.title=oldTitle;
+
+}
+
+};
+
+
+/* =========================================================
+   RECORDING
+========================================================= */
+
+$("recordBtn").onclick=async()=>{
+
+if(recording){
+
+recording.stop();
+
+return;
+
+}
+
+
+let stream;
+
+
+try{
+
+if(
+!navigator.mediaDevices ||
+!navigator.mediaDevices.getDisplayMedia
+){
+
+toast(
+"Not available on mobile browsers — try desktop Chrome/Edge"
+);
+
+return;
+
+}
+
+
+toast(
+"Choose This Tab in the capture dialog"
+);
+
+
+stream=
+await getCapture();
+
+
+const video=
+document.createElement("video");
+
+video.srcObject=stream;
+
+video.muted=true;
+
+video.playsInline=true;
+
+await video.play();
+
+
+const canvas=
+document.createElement("canvas");
+
+const FPS=30;
+
+const canvasStream=
+canvas.captureStream(FPS);
+
+const chunks=[];
+
+
+const supportedTypes=[
+
+"video/webm;codecs=vp9",
+
+"video/webm;codecs=vp8",
+
+"video/webm"
+
+];
+
+
+const mimeType=
+supportedTypes.find(
+type=>MediaRecorder.isTypeSupported(type)
+)||"";
+
+
+const recorder=
+new MediaRecorder(
+canvasStream,
+mimeType?
+{mimeType}:
+undefined
+);
+
+
+const draw=()=>{
+
+if(
+recorder.state==="recording"
+){
+
+cropDeviceFrame(
+video,
+canvas
+);
+
+requestAnimationFrame(draw);
+
+}
+
+};
+
+
+recorder.ondataavailable=
+event=>{
+
+if(event.data.size){
+
+chunks.push(
+event.data
+);
+
+}
+
+};
+
+
+recorder.onstop=()=>{
+
+stream
+.getTracks()
+.forEach(
+track=>track.stop()
+);
+
+canvasStream
+.getTracks()
+.forEach(
+track=>track.stop()
+);
+
+
+const blob=
+new Blob(
+chunks,
+{
+type:
+recorder.mimeType||
+"video/webm"
+}
+);
+
+
+const link=
+document.createElement("a");
+
+
+link.href=
+URL.createObjectURL(blob);
+
+
+link.download=
+`preview-${state.device.w}x${state.device.h}.webm`;
+
+
+link.click();
+
+
+setTimeout(
+()=>URL.revokeObjectURL(link.href),
+2000
+);
+
+
+recording=null;
+
+$("recordBtn")
+.classList.remove(
+"recording"
+);
+
+$("recordBtn").title=
+"Start Recording";
+
+
+toast(
+"Recording saved"
+);
+
+};
+
+
+stream
+.getVideoTracks()[0]
+.addEventListener(
+"ended",
+()=>{
+
+if(recording){
+
+recorder.stop();
+
+}
+
+}
+);
+
+
+recorder.start(250);
+
+
+recording={
+stop:()=>recorder.stop()
+};
+
+
+$("recordBtn")
+.classList.add(
+"recording"
+);
+
+$("recordBtn").title=
+"Stop Recording";
+
+
+toast(
+"🎥 Recording… tap ⏹ to stop"
+);
+
+
+draw();
+
+
+}catch(error){
+
+if(stream){
+
+stream
+.getTracks()
+.forEach(
+track=>track.stop()
+);
+
+}
+
+toast(
+error.message||
+"Recording cancelled"
+);
+
+}
+
+};
+
+
+/* =========================
+   INITIALIZE
+========================= */
+
+renderChips();
+
+landscapeRail();
+
+layout();
+
+
+/* =========================
+   SERVICE WORKER
+========================= */
+
+if(
+"serviceWorker" in navigator
+){
+
+window.addEventListener(
+"load",
+()=>{
+
+navigator.serviceWorker
+.register("sw.js")
+.catch(()=>{});
+
+}
+);
+
+}
+
 })();
+
 </script>
+
 </body>
 </html>
