@@ -196,22 +196,26 @@ if(!url){toast("Enter a valid URL");return}
 if(!navigator.onLine){pendingUrl=url;$("urlInput").value=url;showState("offline");toast("You're offline");return}
 pendingUrl=url;
 clearTimeout(loadTimer);
+let loadedOk=false,settled=false;
+iframe.onload=()=>{
+loadedOk=true;settled=true;
+clearTimeout(loadTimer);
+showState("loaded");
+};
+iframe.onerror=()=>{
+settled=true;
+clearTimeout(loadTimer);
+showState("blocked");
+};
 iframe.src=url;
 showState("loaded");
 $("urlInput").value=url;
 state.history=[url,...state.history.filter(item=>item!==url)].slice(0,8);
 localStorage.setItem("framePreview.history",JSON.stringify(state.history));
 renderHistory();
-let loadedOk=false;
-iframe.onload=()=>{
-loadedOk=true;
-try{void iframe.contentWindow.location.href}catch{}
-clearTimeout(loadTimer);
-};
-iframe.onerror=()=>{clearTimeout(loadTimer);showState("blocked")};
 loadTimer=setTimeout(()=>{
-if(!loadedOk){showState("blocked")}
-},4500);
+if(!loadedOk&&!settled){showState("blocked")}
+},12000);
 }
 $("urlForm").onsubmit=event=>{event.preventDefault();loadUrl($("urlInput").value)};
 $("loadBtn").onclick=()=>loadUrl($("urlInput").value);
@@ -242,7 +246,7 @@ function landscapeRail(){if(matchMedia("(orientation:landscape)").matches){$("ra
 window.addEventListener("orientationchange",landscapeRail);
 let recording=null;
 async function getCapture(){
-if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia)throw new Error("Screen capture is not supported by this browser");
+if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia)throw new Error("Screenshot/recording needs desktop Chrome — mobile browsers do not support this yet");
 return navigator.mediaDevices.getDisplayMedia({video:{displaySurface:"browser",frameRate:30},audio:false,preferCurrentTab:true,selfBrowserSurface:"include",surfaceSwitching:"exclude"});
 }
 function cropDeviceFrame(video,canvas){
@@ -256,7 +260,7 @@ const ctx=canvas.getContext("2d");ctx.drawImage(video,x,y,width,height,0,0,width
 $("screenshotBtn").onclick=async()=>{
 let stream,video;
 try{
-if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){toast("Screen capture isn't supported in this browser");return}
+if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){toast("Not available on mobile browsers — try desktop Chrome/Edge");return}
 toast("Choose This Tab in the capture dialog");
 stream=await getCapture();video=document.createElement("video");video.srcObject=stream;video.muted=true;video.playsInline=true;await video.play();await new Promise(resolve=>setTimeout(resolve,150));
 const canvas=document.createElement("canvas");cropDeviceFrame(video,canvas);
@@ -267,7 +271,7 @@ $("recordBtn").onclick=async()=>{
 if(recording){recording.stop();return}
 let stream;
 try{
-if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){toast("Screen capture isn't supported in this browser");return}
+if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){toast("Not available on mobile browsers — try desktop Chrome/Edge");return}
 toast("Choose This Tab in the capture dialog");
 stream=await getCapture();
 const video=document.createElement("video");video.srcObject=stream;video.muted=true;video.playsInline=true;await video.play();
