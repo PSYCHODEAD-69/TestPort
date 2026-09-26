@@ -670,6 +670,104 @@ font-size:18px
 
 }
 
+#scrollPopover{
+
+position:absolute;
+
+right:56px;
+
+bottom:
+calc(10px + var(--safeB));
+
+width:220px;
+
+background:var(--panel);
+
+border:
+1px solid var(--border);
+
+border-radius:12px;
+
+padding:12px 14px;
+
+box-shadow:
+0 4px 14px #0006;
+
+z-index:17;
+
+display:none
+
+}
+
+#scrollPopover.show{
+
+display:block
+
+}
+
+#scrollPopover .label{
+
+font-size:12px;
+
+color:var(--text);
+
+opacity:0.8;
+
+display:flex;
+
+justify-content:space-between;
+
+margin-bottom:8px
+
+}
+
+#scrollPopover input[type="range"]{
+
+width:100%
+
+}
+
+#scrollPopover .actions{
+
+display:flex;
+
+gap:8px;
+
+margin-top:10px
+
+}
+
+#scrollPopover button{
+
+flex:1;
+
+padding:6px 8px;
+
+border-radius:8px;
+
+border:
+1px solid var(--border);
+
+background:var(--panel);
+
+color:var(--text);
+
+font-size:12px;
+
+cursor:pointer
+
+}
+
+#scrollPopover button.primary{
+
+background:var(--amber);
+
+color:#241a06;
+
+border-color:var(--amber)
+
+}
+
 body.focus #topbar,
 body.focus #rail{
 
@@ -1242,6 +1340,36 @@ title="Focus mode"
 ◎
 
 </button>
+
+</div>
+
+
+<div id="scrollPopover">
+
+<div class="label">
+
+<span>Scroll position</span>
+
+<span id="scrollPopoverValue">0%</span>
+
+</div>
+
+<input
+type="range"
+id="scrollPercentInput"
+min="0"
+max="100"
+value="0"
+step="1"
+>
+
+<div class="actions">
+
+<button id="scrollPopoverCancel">Cancel</button>
+
+<button class="primary" id="scrollPopoverCapture">Capture</button>
+
+</div>
 
 </div>
 
@@ -1831,100 +1959,27 @@ let pendingUrl=null;
 
 
 /* =========================================================
-   TESTPORT SCROLL SYNC
+   TESTPORT SCROLL SELECTION
+   ---------------------------------------------------------
+   The preview iframe loads arbitrary, cross-origin websites.
+   Browsers block reading iframe.contentWindow.scrollY (and any
+   postMessage reply) across origins unless the target page
+   itself cooperates - which a random website never does. That
+   made scroll position detection silently fail and always
+   report 0, so every screenshot came out as a top-of-page shot
+   regardless of how far the user had scrolled inside the frame.
+
+   Fix: don't try to read scroll position from the iframe at
+   all. Instead, let the user pick *where* to capture using a
+   0-100% slider. That percentage is sent to the worker, which
+   computes the actual pixel offset itself by inspecting the
+   real page's scrollHeight server-side (see the Cloudflare
+   Worker's captureWithMicrolink scrollPercent handling). This
+   works for any page, of any height, with no cross-origin
+   restriction in the way.
 ========================================================= */
 
-let currentScrollY=0;
-
-let scrollSyncReceived=false;
-
-
-function readFrameScroll(){
-
-try{
-
-if(iframe.contentWindow){
-
-const y=
-Number(
-iframe.contentWindow.scrollY
-);
-
-if(Number.isFinite(y)){
-
-currentScrollY=
-Math.max(
-0,
-Math.round(y)
-);
-
-scrollSyncReceived=true;
-
-}
-
-}
-
-}catch{}
-
-}
-
-
-function requestFrameScroll(){
-
-try{
-
-iframe.contentWindow?.postMessage(
-{
-type:"TESTPORT_REQUEST_SCROLL"
-},
-"*"
-);
-
-}catch{}
-
-}
-
-
-window.addEventListener(
-"message",
-event=>{
-
-if(
-event.source !==
-iframe.contentWindow
-){
-
-return;
-
-}
-
-const data=
-event.data||{};
-
-
-if(
-data.type==="TESTPORT_SCROLL"
-){
-
-const y=
-Number(data.scrollY);
-
-
-if(Number.isFinite(y)){
-
-currentScrollY=
-Math.max(
-0,
-Math.round(y)
-);
-
-scrollSyncReceived=true;
-
-}
-
-}
-
-});
+let currentScrollPercent=0;
 
 
 /* =========================
@@ -2018,9 +2073,7 @@ return;
 
 pendingUrl=url;
 
-currentScrollY=0;
-
-scrollSyncReceived=false;
+currentScrollPercent=0;
 
 clearTimeout(loadTimer);
 
@@ -2037,25 +2090,9 @@ settled=true;
 
 clearTimeout(loadTimer);
 
-currentScrollY=0;
-
-scrollSyncReceived=false;
+currentScrollPercent=0;
 
 showState("loaded");
-
-
-/*
- Ask the loaded website for its
- current scroll position.
-*/
-
-setTimeout(()=>{
-
-readFrameScroll();
-
-requestFrameScroll();
-
-},150);
 
 };
 
@@ -2637,8 +2674,28 @@ const SCREENSHOT_API=
 "https://testport-ss.devpandey618.workers.dev/screenshot";
 
 
-$("screenshotBtn").onclick=
-async()=>{
+/*
+ Opening the popover instead of capturing
+ immediately: the iframe holds a cross-origin
+ page, so we can never read its real scroll
+ position from here. The user picks the scroll
+ position (0-100% of the page) themselves via
+ the slider, and that percentage is sent to the
+ worker, which resolves it against the target
+ page's actual height server-side.
+*/
+
+const scrollPopover=
+$("scrollPopover");
+
+const scrollPercentInput=
+$("scrollPercentInput");
+
+const scrollPopoverValue=
+$("scrollPopoverValue");
+
+
+function openScrollPopover(){
 
 if(!pendingUrl){
 
@@ -2651,34 +2708,70 @@ return;
 }
 
 
-/*
- Try direct access first.
- This works for same-origin pages.
-*/
+scrollPercentInput.value=
+currentScrollPercent;
 
-readFrameScroll();
+scrollPopoverValue.textContent=
+`${currentScrollPercent}%`;
 
+scrollPopover.classList.add(
+"show"
+);
 
-/*
- Ask cooperating pages for
- their current scroll position.
-*/
-
-requestFrameScroll();
+}
 
 
-/*
- Give postMessage time to return.
-*/
+function closeScrollPopover(){
 
-await new Promise(
-resolve=>
-setTimeout(
-resolve,
-150
+scrollPopover.classList.remove(
+"show"
+);
+
+}
+
+
+scrollPercentInput.oninput=
+()=>{
+
+scrollPopoverValue.textContent=
+`${scrollPercentInput.value}%`;
+
+};
+
+
+$("screenshotBtn").onclick=
+openScrollPopover;
+
+
+$("scrollPopoverCancel").onclick=
+closeScrollPopover;
+
+
+$("scrollPopoverCapture").onclick=
+async()=>{
+
+currentScrollPercent=
+Math.min(
+100,
+Math.max(
+0,
+Math.round(
+Number(scrollPercentInput.value)||
+0
+)
 )
 );
 
+closeScrollPopover();
+
+await runScreenshotCapture(
+currentScrollPercent
+);
+
+};
+
+
+async function runScreenshotCapture(scrollPercent){
 
 const width=Math.max(
 320,
@@ -2694,15 +2787,6 @@ const height=Math.max(
 Math.round(
 Number(state.device.h)||
 720
-)
-);
-
-
-const scrollY=Math.max(
-0,
-Math.round(
-Number(currentScrollY)||
-0
 )
 );
 
@@ -2756,7 +2840,7 @@ width:width,
 
 height:height,
 
-scrollY:scrollY
+scrollPercent:scrollPercent
 
 })
 
@@ -2882,7 +2966,7 @@ link.download=
 /[^a-z0-9]+/gi,
 "-"
 )
-.toLowerCase()}-${width}x${height}-scroll-${scrollY}.png`;
+.toLowerCase()}-${width}x${height}-scroll-${scrollPercent}pct.png`;
 
 
 document.body.appendChild(
@@ -2917,7 +3001,7 @@ provider?
 
 
 toast(
-`Screenshot saved • ${width}×${height} • Y:${scrollY}${providerText}`
+`Screenshot saved • ${width}×${height} • ${scrollPercent}%${providerText}`
 );
 
 
@@ -2931,7 +3015,7 @@ width,
 
 height,
 
-scrollY
+scrollPercent
 
 }
 );
@@ -2964,7 +3048,7 @@ oldTitle;
 
 }
 
-};
+}
 
 
 /* =========================================================
