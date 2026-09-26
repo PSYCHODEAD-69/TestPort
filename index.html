@@ -679,7 +679,10 @@ right:56px;
 bottom:
 calc(10px + var(--safeB));
 
-width:220px;
+width:240px;
+
+max-width:
+calc(100vw - 80px);
 
 background:var(--panel);
 
@@ -702,6 +705,83 @@ display:none
 #scrollPopover.show{
 
 display:block
+
+}
+
+#scrollPreviewBox{
+
+position:relative;
+
+width:100%;
+
+aspect-ratio:16/10;
+
+border-radius:8px;
+
+overflow:hidden;
+
+background:#00000055;
+
+border:
+1px solid var(--border);
+
+margin-bottom:10px;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center
+
+}
+
+#scrollPreviewImg{
+
+width:100%;
+
+height:100%;
+
+object-fit:cover;
+
+object-position:top;
+
+display:none
+
+}
+
+#scrollPreviewImg.show{
+
+display:block
+
+}
+
+#scrollPreviewStatus{
+
+position:absolute;
+
+inset:0;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+text-align:center;
+
+padding:8px;
+
+font-size:11px;
+
+color:var(--text);
+
+opacity:0.7
+
+}
+
+#scrollPreviewStatus.hidden{
+
+display:none
 
 }
 
@@ -1345,6 +1425,14 @@ title="Focus mode"
 
 
 <div id="scrollPopover">
+
+<div id="scrollPreviewBox">
+
+<img id="scrollPreviewImg" alt="">
+
+<div id="scrollPreviewStatus">Drag the slider to preview</div>
+
+</div>
 
 <div class="label">
 
@@ -2695,6 +2783,169 @@ const scrollPopoverValue=
 $("scrollPopoverValue");
 
 
+const scrollPreviewImg=
+$("scrollPreviewImg");
+
+const scrollPreviewStatus=
+$("scrollPreviewStatus");
+
+let previewDebounce=null;
+
+let previewRequestId=0;
+
+let previewObjectUrl=null;
+
+
+/*
+ Low-res "where does this % actually
+ land" preview. Reuses the same worker
+ endpoint the real capture uses, just at
+ a small size so it's fast and cheap -
+ this is what lets the user see the
+ result of a chosen scroll % instead of
+ guessing blind.
+*/
+
+function schedulePreview(percent){
+
+clearTimeout(previewDebounce);
+
+previewDebounce=setTimeout(
+()=>fetchPreview(percent),
+350
+);
+
+}
+
+
+async function fetchPreview(percent){
+
+if(!pendingUrl)return;
+
+const myRequestId=
+++previewRequestId;
+
+scrollPreviewStatus.classList.remove(
+"hidden"
+);
+
+scrollPreviewStatus.textContent=
+"Loading preview…";
+
+
+try{
+
+const response=
+await fetch(
+SCREENSHOT_API,
+{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":
+"application/json"
+
+},
+
+body:JSON.stringify({
+
+url:pendingUrl,
+
+width:480,
+
+height:300,
+
+scrollPercent:percent
+
+})
+
+}
+);
+
+
+if(myRequestId!==previewRequestId){
+
+/*
+ A newer preview request has
+ since been made; drop this
+ stale result.
+*/
+
+return;
+
+}
+
+
+if(!response.ok){
+
+throw new Error(
+"preview failed"
+);
+
+}
+
+
+const blob=
+await response.blob();
+
+
+if(myRequestId!==previewRequestId){
+
+return;
+
+}
+
+
+if(previewObjectUrl){
+
+URL.revokeObjectURL(
+previewObjectUrl
+);
+
+}
+
+
+previewObjectUrl=
+URL.createObjectURL(
+blob
+);
+
+
+scrollPreviewImg.src=
+previewObjectUrl;
+
+scrollPreviewImg.classList.add(
+"show"
+);
+
+scrollPreviewStatus.classList.add(
+"hidden"
+);
+
+
+}catch{
+
+if(myRequestId!==previewRequestId){
+
+return;
+
+}
+
+
+scrollPreviewStatus.classList.remove(
+"hidden"
+);
+
+scrollPreviewStatus.textContent=
+"Preview unavailable — you can still capture";
+
+}
+
+}
+
+
 function openScrollPopover(){
 
 if(!pendingUrl){
@@ -2714,8 +2965,23 @@ currentScrollPercent;
 scrollPopoverValue.textContent=
 `${currentScrollPercent}%`;
 
+scrollPreviewImg.classList.remove(
+"show"
+);
+
+scrollPreviewStatus.classList.remove(
+"hidden"
+);
+
+scrollPreviewStatus.textContent=
+"Drag the slider to preview";
+
 scrollPopover.classList.add(
 "show"
+);
+
+fetchPreview(
+currentScrollPercent
 );
 
 }
@@ -2727,6 +2993,10 @@ scrollPopover.classList.remove(
 "show"
 );
 
+clearTimeout(
+previewDebounce
+);
+
 }
 
 
@@ -2735,6 +3005,19 @@ scrollPercentInput.oninput=
 
 scrollPopoverValue.textContent=
 `${scrollPercentInput.value}%`;
+
+scrollPreviewStatus.classList.remove(
+"hidden"
+);
+
+scrollPreviewStatus.textContent=
+"Loading preview…";
+
+schedulePreview(
+Number(
+scrollPercentInput.value
+)
+);
 
 };
 
